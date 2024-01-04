@@ -3,6 +3,8 @@ package org.example;
 import brut.androlib.ApkBuilder;
 import brut.androlib.ApkDecoder;
 import brut.androlib.Config;
+import brut.androlib.apk.ApkInfo;
+import brut.androlib.exceptions.AndrolibException;
 import brut.androlib.exceptions.CantFindFrameworkResException;
 import brut.androlib.exceptions.InFileNotFoundException;
 import brut.androlib.exceptions.OutDirExistsException;
@@ -19,46 +21,59 @@ import java.nio.file.*;
 public class Main {
 
     public static void main(String[] args) {
-        String codePath = "/Users/yangzc/Downloads/api-debug";
-        String apkPath = "/Users/yangzc/Downloads/base_posed/WeCom_android_4.1.10.24949_arm64_100038.apk";
-        String cacheDir = "/Users/yangzc/Downloads/base_posed/";
-        String keyStore = "/Users/yangzc/devsoft/shells/apktool/yangzc.keystore";
+        String basePath = System.getProperty("user.dir");
+        String zipAlignBinPath = basePath + "/bin/mac/zipalign";
+        String keyStore = basePath + "/bin/keystore.ks";
+        String codePath = basePath + "/bin/patchCode";
+        String cacheDir = basePath + "/target/tmp";
         String keyStorePwd = "yangzc";
+
+        String apkPath = "/Users/yangzc/Downloads/base_posed/WeCom_android_4.1.10.24949_arm64_100038.apk";
         try {
             // 解压原始apk文件
             File sourceRoot = new File(cacheDir, new File(apkPath).getName().replace(".apk", ""));
             if (sourceRoot.exists()) {
                 FileUtils.deleteQuietly(sourceRoot);
             }
+            FileUtils.createParentDirectories(sourceRoot);
             decodeApk(apkPath, sourceRoot);
             File appFile = fineWwApplicationFile(sourceRoot);
             if (appFile != null) {
                 File targetSmaliClassDir = new File(appFile.getAbsolutePath().substring(0, appFile.getAbsolutePath().indexOf("/com")));
                 fixUpTargetSmaliClassDir(sourceRoot, targetSmaliClassDir);
                 fixUpResourceFiles(sourceRoot);
-
+                fixUpTargetSdkVersion(sourceRoot);
                 patchWwApplication(appFile.getAbsolutePath());
                 copyPatchFiles(sourceRoot, new File(codePath));
 
-                File encodeApk = new File(sourceRoot, "dist/unsigned.apk");
+                File encodeApk = new File(sourceRoot, "dist/" + new File(apkPath).getName()
+                        .replace(".apk", "") + "_unsigned.apk");
                 if (!encodeApk.getParentFile().exists())
                     encodeApk.getParentFile().mkdirs();
                 encodeApk(sourceRoot.getAbsolutePath(), encodeApk);
+                // align
+                File alignFile = new File(encodeApk.getParentFile(),
+                        new File(apkPath).getName().replace(".apk", "_align.apk"));
+                String alignCmd = zipAlignBinPath +
+                        " -p -f -v 4 " +
+                        encodeApk.getAbsolutePath() + " " + alignFile.getAbsolutePath();
+                execCmd(alignCmd);
+
                 // 签名
                 String osName = System.getProperty("os.name");
                 if (!osName.toUpperCase().contains("WINDOWS")) {
                     String cmd = "jarsigner " +
                             "-verbose " +
                             "-keystore " + keyStore + "  -storepass " + keyStorePwd + " -keypass " + keyStorePwd + " " +
-                            "-signedjar " + new File(encodeApk.getParentFile(),
+                            "-signedjar " + new File(alignFile.getParentFile(),
                             new File(apkPath).getName().replace(".apk", "_fake.apk")).getAbsolutePath() + " " +
-                            encodeApk.getAbsolutePath() + " yangzc";
+                            alignFile.getAbsolutePath() + " yangzc";
                     execCmd(cmd);
                 }
             } else {
                 throw new IOException("Application not found exception");
             }
-        } catch (IOException | InterruptedException | BrutException e) {
+        } catch (IOException | BrutException | InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
@@ -79,7 +94,7 @@ public class Main {
         // 拷贝so文件
         File[] soFiles = new File(resDir, "lib/arm64-v8a").listFiles();
         if (soFiles != null) {
-            for(File file: soFiles) {
+            for (File file : soFiles) {
                 FileUtils.copyFile(file
                         , new File(target, "lib/arm64-v8a/" + file.getName()));
             }
@@ -125,7 +140,7 @@ public class Main {
             File[] files = parentDir.listFiles();
             if (files != null) {
                 for (File file : files) {
-                    File result =  fineWwApplicationFile(file);
+                    File result = fineWwApplicationFile(file);
                     if (result != null) {
                         return result;
                     }
@@ -141,7 +156,8 @@ public class Main {
 
     /**
      * 因为有可能目标small_class目录就该之后方法数超过上线，所以需要重新整理要修改的smali_class
-     * @param sourceRoot 反编译之后的源码目录
+     *
+     * @param sourceRoot    反编译之后的源码目录
      * @param smaliClassDir 要整理的smali_class目录
      */
     private static void fixUpTargetSmaliClassDir(File sourceRoot, File smaliClassDir) {
@@ -178,6 +194,13 @@ public class Main {
         }
     }
 
+    private static void fixUpTargetSdkVersion(File sourceRoot) throws AndrolibException {
+        ApkInfo info = ApkInfo.load(sourceRoot);
+        System.out.println(info.checkTargetSdkVersionBounds());
+        info.setSdkInfoField("targetSdkVersion", "28");
+        info.save(new File(sourceRoot, "/apktool.yml"));
+    }
+
     private static void patchWwApplication(String filePath) {
         try (FileInputStream fis = new FileInputStream(filePath)) {
             byte[] bytes = IOUtils.toByteArray(fis);
@@ -202,6 +225,8 @@ public class Main {
 
     private static void encodeApk(String appDirName, File outFile) throws BrutException {
         Config config = Config.getDefaultConfig();
+        config.forceApi = 28;
+        config.forceBuildAll = true;
         (new ApkBuilder(config, new ExtFile(appDirName))).build(outFile);
     }
 

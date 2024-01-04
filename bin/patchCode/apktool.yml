@@ -1,0 +1,25 @@
+version: 2.9.0
+apkFileName: api-debug.apk
+isFrameworkApk: false
+usesFramework:
+  ids:
+  - 1
+  tag: null
+sdkInfo:
+  minSdkVersion: 27
+  targetSdkVersion: 34
+packageInfo:
+  forcedPackageId: 0
+  renameManifestPackage: null
+versionInfo:
+  versionCode: 100
+  versionName: 1.0.0
+resourcesAreCompressed: false
+sharedLibrary: false
+sparseResources: false
+doNotCompress:
+- resources.arsc
+- lib/arm64-v8a/libcore.so
+- lib/armeabi-v7a/libcore.so
+- lib/x86/libcore.so
+- lib/x86_64/libcore.so

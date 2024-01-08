@@ -23,10 +23,10 @@ public class Main {
     public static void main(String[] args) {
         String basePath = System.getProperty("user.dir");
         String zipAlignBinPath = basePath + "/bin/mac/zipalign";
-        String keyStore = basePath + "/bin/keystore.ks";
+        String keyStore = basePath + "/bin/we.ks";
         String codePath = basePath + "/bin/patchCode";
         String cacheDir = basePath + "/target/tmp";
-        String keyStorePwd = "yangzc";
+        String keyStorePwd = "wework";
 
         String apkPath = "/Users/yangzc/Downloads/base_posed/WeCom_android_4.1.10.24949_arm64_100038.apk";
         try {

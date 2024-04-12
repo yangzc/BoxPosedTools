@@ -11,6 +11,7 @@ import brut.androlib.exceptions.OutDirExistsException;
 import brut.common.BrutException;
 import brut.directory.DirectoryException;
 import brut.directory.ExtFile;
+import org.apache.commons.cli.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
@@ -27,8 +28,35 @@ public class Main {
         String codePath = basePath + "/bin/patchCode";
         String cacheDir = basePath + "/target/tmp";
         String keyStorePwd = "wework";
-
         String apkPath = "/Users/yangzc/Downloads/base_posed/WeCom_android_4.1.10.24949_arm64_100038.apk";
+
+        CommandLineParser commandLineParser = new DefaultParser();
+        Options options = new Options();
+        options.addOption(Option.builder("h").longOpt("help").argName("帮助").desc("帮助").hasArg(true).build());
+        options.addOption(Option.builder("p").longOpt("apk").argName("帮助").desc("帮助").hasArg(true).build());
+
+//        CommandLine commandLine;
+//        HelpFormatter hf = new HelpFormatter();
+//        try {
+//            commandLine = commandLineParser.parse(options, args, true);
+//        } catch (ParseException e) {
+//            hf.printHelp("BoxPosed", options);
+//            return;
+//        }
+//
+//        options.addOption("start", true, "开始");
+//        options.addOption("end", true, "结束");
+//        options.addOption("flag", false, "标志");
+//        CommandLine commandLine = commandLineParser.parse(options, args);
+//        if (commandLine.hasOption("flag")) {
+//            System.out.println("0000000000");
+//        }
+//        System.out.println(commandLine.getOptionValue("start"));
+//        System.out.println(commandLine.getOptionValue("end"));
+
+//        if (true)
+//            return;
+
         try {
             // 解压原始apk文件
             File sourceRoot = new File(cacheDir, new File(apkPath).getName().replace(".apk", ""));

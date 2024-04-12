@@ -28,7 +28,7 @@ public class Main {
         String codePath = basePath + "/bin/patchCode";
         String cacheDir = basePath + "/target/tmp";
         String keyStorePwd = "wework";
-        String apkPath = "/Users/yangzc/Downloads/base_posed/WeCom_android_4.1.10.24949_arm64_100038.apk";
+        String apkPath = "/Users/yangzc/devsoft/wework/WeCom_android_4.1.22.28139_arm64_100038.apk";
 
         CommandLineParser commandLineParser = new DefaultParser();
         Options options = new Options();
@@ -95,7 +95,7 @@ public class Main {
                             "-keystore " + keyStore + "  -storepass " + keyStorePwd + " -keypass " + keyStorePwd + " " +
                             "-signedjar " + new File(alignFile.getParentFile(),
                             new File(apkPath).getName().replace(".apk", "_fake.apk")).getAbsolutePath() + " " +
-                            alignFile.getAbsolutePath() + " yangzc";
+                            alignFile.getAbsolutePath() + " we";
                     execCmd(cmd);
                 }
             } else {
@@ -193,7 +193,7 @@ public class Main {
         int smaliDirCnt = getSmaliClassCnt(sourceRoot);
         if (subFiles != null) {
             for (File subFile : subFiles) {
-                if (subFile.isDirectory() && !subFile.getName().startsWith("com")) {
+                if (/*subFile.isDirectory() && */!subFile.getName().startsWith("com")) {
                     File newSmaliDir = new File(sourceRoot, "smali_classes" + (smaliDirCnt + 1));
                     if (!newSmaliDir.exists())
                         newSmaliDir.mkdirs();

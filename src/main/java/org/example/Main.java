@@ -11,7 +11,10 @@ import brut.androlib.exceptions.OutDirExistsException;
 import brut.common.BrutException;
 import brut.directory.DirectoryException;
 import brut.directory.ExtFile;
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
@@ -28,7 +31,7 @@ public class Main {
         String codePath = basePath + "/bin/patchCode";
         String cacheDir = basePath + "/target/tmp";
         String keyStorePwd = "wework";
-        String apkPath = "/Users/yangzc/devsoft/wework/WeCom_android_4.1.22.28139_arm64_100038.apk";
+        String apkPath = "/Users/yangzc/devsoft/wework/WeCom_android_4.1.28.30291_arm64_100038.apk";
 
         CommandLineParser commandLineParser = new DefaultParser();
         Options options = new Options();
@@ -57,22 +60,28 @@ public class Main {
 //        if (true)
 //            return;
 
+        boolean onlyEncodeApk = true;
         try {
             // 解压原始apk文件
             File sourceRoot = new File(cacheDir, new File(apkPath).getName().replace(".apk", ""));
-            if (sourceRoot.exists()) {
-                FileUtils.deleteQuietly(sourceRoot);
+            if (!onlyEncodeApk) {
+                if (sourceRoot.exists()) {
+                    FileUtils.deleteQuietly(sourceRoot);
+                }
+                FileUtils.createParentDirectories(sourceRoot);
+                decodeApk(apkPath, sourceRoot);
             }
-            FileUtils.createParentDirectories(sourceRoot);
-            decodeApk(apkPath, sourceRoot);
+
             File appFile = fineWwApplicationFile(sourceRoot);
             if (appFile != null) {
-                File targetSmaliClassDir = new File(appFile.getAbsolutePath().substring(0, appFile.getAbsolutePath().indexOf("/com")));
-                fixUpTargetSmaliClassDir(sourceRoot, targetSmaliClassDir);
-                fixUpResourceFiles(sourceRoot);
-                fixUpTargetSdkVersion(sourceRoot);
-                patchWwApplication(appFile.getAbsolutePath());
-                copyPatchFiles(sourceRoot, new File(codePath));
+                if (!onlyEncodeApk) {
+                    File targetSmaliClassDir = new File(appFile.getAbsolutePath().substring(0, appFile.getAbsolutePath().indexOf("/com")));
+                    fixUpTargetSmaliClassDir(sourceRoot, targetSmaliClassDir);
+                    fixUpResourceFiles(sourceRoot);
+                    fixUpTargetSdkVersion(sourceRoot);
+                    patchWwApplication(appFile.getAbsolutePath());
+                    copyPatchFiles(sourceRoot, new File(codePath));
+                }
 
                 File encodeApk = new File(sourceRoot, "dist/" + new File(apkPath).getName()
                         .replace(".apk", "") + "_unsigned.apk");
